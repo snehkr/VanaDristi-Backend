@@ -2,6 +2,7 @@ fastapi
 httpx
 uvicorn[standard]
 bson
+motor
 pydantic
 python-dotenv
 pymongo
