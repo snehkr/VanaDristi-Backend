@@ -1,11 +1,10 @@
 fastapi
 httpx
 uvicorn[standard]
-bson
-motor
 pydantic
 python-dotenv
-pymongo
+pymongo[srv]
+motor
 google-generativeai
 python-multipart
 Pillow
