@@ -1,8 +1,11 @@
 <div align="center">
   <br />
-  <img src="https://placehold.co/600x300/1D2B1F/90EE90?text=VanaDristi+API&font=raleway" alt="VanaDristi API Banner">
-  <br /><br />
-  <h1>VanaDristi API 🌿</h1>
+  <img src="https://ik.imagekit.io/vanadristi/VanaDristi.jpeg" 
+     alt="VanaDristi API Banner" 
+     width="250px" 
+     style="border-radius: 50%;">
+  <br />
+  <h1>🌿 VanaDristi API 🌿</h1>
   <p>
     <b>An intelligent, asynchronous API for AI-powered plant health monitoring, diagnosis, and care.</b>
   </p>
@@ -31,31 +34,31 @@
 
 ---
 
-[cite_start]**VanaDristi** (from Sanskrit: वन दृष्टि, meaning "Forest Vision") is a public platform for monitoring plant health[cite: 1]. [cite_start]It leverages real-time sensor data and the power of Google's Gemini AI to provide detailed health assessments, actionable advice, and timely alerts via Telegram[cite: 1], acting as your personal AI botanist.
+**VanaDristi** (from Sanskrit: वन दृष्टि, meaning "Forest Vision") is a public platform for monitoring plant health. It leverages real-time sensor data and the power of Google's Gemini AI to provide detailed health assessments, actionable advice, and timely alerts via Telegram, acting as your personal AI botanist.
 
 ## ✨ Core Features
 
 - 🤖 **AI-Powered Analysis**:
-  - [cite_start]**Species Identification**: Identify a plant's name from an image[cite: 1].
-  - [cite_start]**Health Diagnosis**: Get a detailed health report, confidence score, and actionable recommendations from sensor data[cite: 1].
-  - [cite_start]**Conversational AI Chat**: Ask an AI plant doctor specific questions about your plant's condition[cite: 1].
-- [cite_start]📊 **Real-time Sensor Monitoring**: A robust endpoint for ingesting data like soil moisture, temperature, humidity, and light intensity[cite: 1].
-- [cite_start]🔔 **Automated Telegram Alerts**: Set custom thresholds for sensor data and receive instant notifications when your plant needs attention[cite: 1].
-- [cite_start]📈 **Historical Data & Trends**: Access the latest sensor data, a complete history of readings, and aggregated daily trends[cite: 1].
-- [cite_start]🌱 **Full Plant Management**: Complete CRUD (Create, Read, Update, Delete) functionality for managing your plant profiles[cite: 1].
-- [cite_start]🚀 **Scalable & Secure**: Built with modern, asynchronous tools (FastAPI & Motor), with rate limiting to prevent abuse[cite: 1].
+  - **Species Identification**: Identify a plant's name from an image.
+  - **Health Diagnosis**: Get a detailed health report, confidence score, and actionable recommendations from sensor data.
+  - **Conversational AI Chat**: Ask an AI plant doctor specific questions about your plant's condition.
+- 📊 **Real-time Sensor Monitoring**: A robust endpoint for ingesting data like soil moisture, temperature, humidity, and light intensity.
+- 🔔 **Automated Telegram Alerts**: Set custom thresholds for sensor data and receive instant notifications when your plant needs attention.
+- 📈 **Historical Data & Trends**: Access the latest sensor data, a complete history of readings, and aggregated daily trends.
+- 🌱 **Full Plant Management**: Complete CRUD (Create, Read, Update, Delete) functionality for managing your plant profiles.
+- 🚀 **Scalable & Secure**: Built with modern, asynchronous tools (FastAPI & Motor), with rate limiting to prevent abuse.
 - ☁️ **Vercel Ready**: Pre-configured for seamless, serverless deployment.
 
 ## 🏗️ System Architecture
 
 The API follows a simple yet powerful data flow:
 
-1.  [cite_start]**Device/User**: A sensor device (like an ESP32) or a user uploads sensor data and an optional image to the `/sensor/upload` endpoint[cite: 1].
-2.  **FastAPI Backend**: The data is received, validated, and stored in MongoDB. [cite_start]The image is uploaded to ImageKit[cite: 1].
-3.  [cite_start]**Background Task**: A background task checks the new data against the plant's alert thresholds[cite: 1].
-4.  [cite_start]**Telegram Alert**: If a threshold is breached, a formatted alert is sent to a specified Telegram chat[cite: 1].
-5.  [cite_start]**AI Analysis**: The user can trigger an AI analysis, which pulls the latest data from MongoDB and sends it to the Google Gemini API[cite: 1].
-6.  [cite_start]**AI Response**: The AI's diagnosis or chat response is saved to the database and returned to the user[cite: 1].
+1.  **Device/User**: A sensor device (like an ESP32) or a user uploads sensor data and an optional image to the `/sensor/upload` endpoint.
+2.  **FastAPI Backend**: The data is received, validated, and stored in MongoDB. The image is uploaded to ImageKit.
+3.  **Background Task**: A background task checks the new data against the plant's alert thresholds.
+4.  **Telegram Alert**: If a threshold is breached, a formatted alert is sent to a specified Telegram chat.
+5.  **AI Analysis**: The user can trigger an AI analysis, which pulls the latest data from MongoDB and sends it to the Google Gemini API.
+6.  **AI Response**: The AI's diagnosis or chat response is saved to the database and returned to the user.
 
 <div align="center">
 
@@ -65,14 +68,14 @@ The API follows a simple yet powerful data flow:
 
 ## 🛠️ Tech Stack
 
-| Category       | Technology                                                                                                                                 |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Backend**    | [**FastAPI**](https://fastapi.tiangolo.com/), [**Uvicorn**](https://www.uvicorn.org/)                                                      |
-| **Database**   | [cite_start][**MongoDB**](https://www.mongodb.com/) (with [**Motor**](https://motor.readthedocs.io/en/stable/) for async access) [cite: 1] |
-| **AI Model**   | [**Google Gemini**](https://ai.google.dev/)                                                                                                |
-| **Image CDN**  | [cite_start][**ImageKit.io**](https://imagekit.io/) [cite: 1]                                                                              |
-| **Alerting**   | [cite_start][**Telegram**](https://telegram.org/) [cite: 1]                                                                                |
-| **Deployment** | [**Vercel**](https://vercel.com/)                                                                                                          |
+| Category       | Technology                                                                                                           |
+| -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Backend**    | [**FastAPI**](https://fastapi.tiangolo.com/), [**Uvicorn**](https://www.uvicorn.org/)                                |
+| **Database**   | [**MongoDB**](https://www.mongodb.com/) (with [**Motor**](https://motor.readthedocs.io/en/stable/) for async access) |
+| **AI Model**   | [**Google Gemini**](https://ai.google.dev/)                                                                          |
+| **Image CDN**  | [**ImageKit.io**](https://imagekit.io/)                                                                              |
+| **Alerting**   | [**Telegram**](https://telegram.org/)                                                                                |
+| **Deployment** | [**Vercel**](https://vercel.com/)                                                                                    |
 
 ## 🚀 Getting Started
 
@@ -133,26 +136,26 @@ The API follows a simple yet powerful data flow:
 
 ## 📖 API Endpoint Documentation
 
-[cite_start]Here is a summary of the available endpoints[cite: 1]. For full details, run the server and visit the `/docs` endpoint.
+Here is a summary of the available endpoints. For full details, run the server and visit the `/docs` endpoint.
 
-| Endpoint                                | Method   | Description                                                                 |
-| --------------------------------------- | -------- | --------------------------------------------------------------------------- |
-| **Plant Management (`/api/v1/plants`)** |          |                                                                             |
-| `/`                                     | `POST`   | [cite_start]Create a new plant profile. [cite: 1]                           |
-| `/`                                     | `GET`    | [cite_start]Get a list of all plants. [cite: 1]                             |
-| `/{plant_id}`                           | `GET`    | [cite_start]Get details for a specific plant. [cite: 1]                     |
-| `/{plant_id}`                           | `PUT`    | [cite_start]Update a plant's details and alert thresholds. [cite: 1]        |
-| `/{plant_id}`                           | `DELETE` | [cite_start]Delete a plant. [cite: 1]                                       |
-| **Sensor Data (`/api/v1/sensor`)**      |          |                                                                             |
-| `/upload`                               | `POST`   | [cite_start]Upload sensor data (JSON) and an optional image file. [cite: 1] |
-| `/history/{plant_id}`                   | `GET`    | [cite_start]Get the historical sensor data for a plant. [cite: 1]           |
-| `/latest/{plant_id}`                    | `GET`    | [cite_start]Get the most recent sensor reading for a plant. [cite: 1]       |
-| `/trends/{plant_id}`                    | `GET`    | [cite_start]Get daily average trends for key metrics. [cite: 1]             |
-| **AI Analysis (`/api/v1/ai`)**          |          |                                                                             |
-| `/identify`                             | `POST`   | [cite_start]Upload an image to identify the plant species. [cite: 1]        |
-| `/analysis`                             | `GET`    | [cite_start]Trigger an AI health analysis for a plant. [cite: 1]            |
-| `/chat`                                 | `POST`   | [cite_start]Start a conversation with the AI plant doctor. [cite: 1]        |
-| `/chat_history`                         | `GET`    | [cite_start]Retrieve the history of AI interactions for a plant. [cite: 1]  |
+| Endpoint                                | Method   | Description                                           |
+| --------------------------------------- | -------- | ----------------------------------------------------- |
+| **Plant Management (`/api/v1/plants`)** |          |                                                       |
+| `/`                                     | `POST`   | Create a new plant profile.                           |
+| `/`                                     | `GET`    | Get a list of all plants.                             |
+| `/{plant_id}`                           | `GET`    | Get details for a specific plant.                     |
+| `/{plant_id}`                           | `PUT`    | Update a plant's details and alert thresholds.        |
+| `/{plant_id}`                           | `DELETE` | Delete a plant.                                       |
+| **Sensor Data (`/api/v1/sensor`)**      |          |                                                       |
+| `/upload`                               | `POST`   | Upload sensor data (JSON) and an optional image file. |
+| `/history/{plant_id}`                   | `GET`    | Get the historical sensor data for a plant.           |
+| `/latest/{plant_id}`                    | `GET`    | Get the most recent sensor reading for a plant.       |
+| `/trends/{plant_id}`                    | `GET`    | Get daily average trends for key metrics.             |
+| **AI Analysis (`/api/v1/ai`)**          |          |                                                       |
+| `/identify`                             | `POST`   | Upload an image to identify the plant species.        |
+| `/analysis`                             | `GET`    | Trigger an AI health analysis for a plant.            |
+| `/chat`                                 | `POST`   | Start a conversation with the AI plant doctor.        |
+| `/chat_history`                         | `GET`    | Retrieve the history of AI interactions for a plant.  |
 
 ---
 
