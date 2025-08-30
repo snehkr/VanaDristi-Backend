@@ -1,9 +1,6 @@
 <div align="center">
   <br />
-  <img src="https://ik.imagekit.io/vanadristi/VanaDristi.jpeg" 
-     alt="VanaDristi API Banner" 
-     width="250px" 
-     style="border-radius: 50%;">
+  <img src="https://ik.imagekit.io/vanadristi/VanaDristi.jpeg" alt="VanaDristi API Banner" width="250px" style="border-radius: 50%;">
   <br />
   <h1>🌿 VanaDristi API 🌿</h1>
   <p>
