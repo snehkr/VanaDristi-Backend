@@ -1,0 +1,11 @@
+fastapi
+httpx
+uvicorn[standard]
+bson
+pydantic
+python-dotenv
+pymongo
+google-generativeai
+python-multipart
+Pillow
+slowapi
