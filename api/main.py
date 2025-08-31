@@ -956,8 +956,8 @@ app.include_router(ai_router)
 
 
 # ==============================================================================
-# 9. MAIN EXECUTION BLOCK
+# 9. MAIN EXECUTION BLOCK [For Local Testing]
 # ==============================================================================
-if __name__ == "__main__":
-    print("Starting VanaDristi API server...")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+# if __name__ == "__main__":
+#     print("Starting VanaDristi API server...")
+#     uvicorn.run("main:app", host="0.0.0.0", port=8000)
