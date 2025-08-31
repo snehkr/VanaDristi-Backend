@@ -445,7 +445,7 @@ sensor_router = APIRouter(prefix="/api/v1/sensor", tags=["Sensor Data"])
 
 
 @sensor_router.post("/upload")
-@limiter.limit("20/minute")
+@limiter.limit("40/minute")
 async def upload_sensor_data(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -478,7 +478,7 @@ async def upload_sensor_data(
 
 
 @sensor_router.post("/upload_first")
-@limiter.limit("20/minute")
+@limiter.limit("40/minute")
 async def upload_first_sensor_data(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -629,7 +629,7 @@ async def get_latest_sensor_data(plant_id: str):
 
 
 @sensor_router.get("/trends/{plant_id}")
-@limiter.limit("15/minute")
+@limiter.limit("45/minute")
 async def get_plant_trends(request: Request, plant_id: str):
     pipeline = [
         {"$match": {"plant_id": plant_id}},
@@ -662,7 +662,7 @@ ai_router = APIRouter(prefix="/api/v1/ai", tags=["AI Analysis"])
 
 
 @ai_router.post("/identify")
-@limiter.limit("5/minute")
+@limiter.limit("45/minute")
 async def identify_plant_species(
     request: Request,
     image: UploadFile = File(...),
@@ -712,7 +712,7 @@ Do not include any text outside of JSON.
 
 
 @ai_router.get("/identifications")
-@limiter.limit("20/minute")
+@limiter.limit("45/minute")
 async def get_all_identified_plant_species(
     request: Request,
 ):
@@ -802,7 +802,7 @@ Based on all the context above, answer the user's question directly. Provide a h
 
 
 @ai_router.get("/analysis")
-@limiter.limit("10/minute")
+@limiter.limit("40/minute")
 async def trigger_ai_analysis(
     request: Request,
     plant_id: str,
@@ -821,7 +821,7 @@ async def trigger_ai_analysis(
         raise HTTPException(
             status_code=404, detail="No sensor data available to analyze."
         )
-        
+
     plant_name = latest_sensor_data.get("plant_name", "Unknown Plant")
     plant_species = latest_sensor_data.get("plant_species", "Unknown Species")
     prompt = build_prompt_from_sensor(
@@ -872,7 +872,7 @@ async def trigger_ai_analysis(
 
 # Chatbot endpoint
 @ai_router.post("/chat", tags=["AI Analysis"])
-@limiter.limit("20/minute")
+@limiter.limit("40/minute")
 async def chat_with_ai(
     request: Request,
     query: ChatQuery,
@@ -916,7 +916,7 @@ async def chat_with_ai(
 
 
 @ai_router.get("/chat_history")
-@limiter.limit("10/minute")
+@limiter.limit("45/minute")
 async def get_chat_history(
     request: Request,
     plant_id: str = Query(default=None),
