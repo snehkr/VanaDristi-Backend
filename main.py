@@ -14,6 +14,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 
 # --- FastAPI & Related ---
+from fastapi.params import Query
 import uvicorn
 import httpx
 from fastapi import (
@@ -360,20 +361,9 @@ app = FastAPI(
 # --- Middleware ---
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-origins = [
-    "https://vanadristi.snehkr.in",
-    "https://api-vanadristi.snehkr.in",
-    "https://vanadristi.vercel.app",
-    "https://vanadristi-api.vercel.app",
-    "http://localhost:5173",  # local development frontend
-]
-
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origin_regex="https?://.*",
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -831,8 +821,9 @@ async def trigger_ai_analysis(
         raise HTTPException(
             status_code=404, detail="No sensor data available to analyze."
         )
-    plant_name = latest_sensor_data.get("name", "Unknown Plant")
-    plant_species = latest_sensor_data.get("species", "Unknown Species")
+        
+    plant_name = latest_sensor_data.get("plant_name", "Unknown Plant")
+    plant_species = latest_sensor_data.get("plant_species", "Unknown Species")
     prompt = build_prompt_from_sensor(
         latest_sensor_data, plant_name=plant_name, plant_species=plant_species
     )
@@ -849,9 +840,9 @@ async def trigger_ai_analysis(
 
     try:
         if img_bytes:
-            ai_result_text = analyze_with_image(prompt, img_bytes)
+            ai_result_text = await analyze_with_image(prompt, img_bytes)
         else:
-            ai_result_text = analyze_text(prompt)
+            ai_result_text = await analyze_text(prompt)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"AI model call failed: {e}")
 
@@ -928,17 +919,30 @@ async def chat_with_ai(
 @limiter.limit("10/minute")
 async def get_chat_history(
     request: Request,
-    plant_id: str,
+    plant_id: str = Query(default=None),
     limit: int = 50,
 ):
     """Retrieves the history of AI analysis interactions."""
-    query = {"plant_id": plant_id}
-    cursor = (
-        db.chat_history.find(query, {"_id": 0})
-        .sort("timestamp", DESCENDING)
-        .limit(limit)
-    )
-    items = await cursor.to_list(length=limit)
+
+    if plant_id:
+        # Fetch latest entries for the given plant
+        cursor = (
+            db.chat_history.find({"plant_id": plant_id}, {"_id": 0})
+            .sort("timestamp", DESCENDING)
+            .limit(limit)
+        )
+        items = await cursor.to_list(length=limit)
+    else:
+        # Fetch latest entry per plant
+        pipeline = [
+            {"$sort": {"timestamp": -1}},
+            {"$group": {"_id": "$plant_id", "latest_entry": {"$first": "$$ROOT"}}},
+            {"$replaceRoot": {"newRoot": "$latest_entry"}},
+            {"$limit": limit},
+        ]
+        cursor = db.chat_history.aggregate(pipeline)
+        items = [doc async for doc in cursor]
+
     return json.loads(json.dumps(items, default=str))
 
 
