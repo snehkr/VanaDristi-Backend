@@ -899,7 +899,7 @@ async def chat_with_ai(
     prompt = build_chat_prompt(query.question, latest_sensor_data, last_analysis)
 
     try:
-        ai_response_text = analyze_text(prompt, response_format="text")
+        ai_response_text = await analyze_text(prompt, response_format="text")
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"AI model call failed: {e}")
 
