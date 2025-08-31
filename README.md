@@ -145,11 +145,13 @@ Here is a summary of the available endpoints. For full details, run the server a
 | `/{plant_id}`                           | `DELETE` | Delete a plant.                                       |
 | **Sensor Data (`/api/v1/sensor`)**      |          |                                                       |
 | `/upload`                               | `POST`   | Upload sensor data (JSON) and an optional image file. |
+| `/upload_first`                         | `POST`   | Upload sensor data (JSON) and an image file with AI.  |
 | `/history/{plant_id}`                   | `GET`    | Get the historical sensor data for a plant.           |
 | `/latest/{plant_id}`                    | `GET`    | Get the most recent sensor reading for a plant.       |
 | `/trends/{plant_id}`                    | `GET`    | Get daily average trends for key metrics.             |
 | **AI Analysis (`/api/v1/ai`)**          |          |                                                       |
 | `/identify`                             | `POST`   | Upload an image to identify the plant species.        |
+| `/identifications`                      | `GET`    | Get All Identified Plant Species as Json.             |
 | `/analysis`                             | `GET`    | Trigger an AI health analysis for a plant.            |
 | `/chat`                                 | `POST`   | Start a conversation with the AI plant doctor.        |
 | `/chat_history`                         | `GET`    | Retrieve the history of AI interactions for a plant.  |
