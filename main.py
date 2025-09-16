@@ -381,7 +381,11 @@ home_router = APIRouter(tags=["Home"])
 
 @home_router.get("/")
 def read_root():
-    return {"status": "ok", "message": "Welcome to the VanaDristi API Platform!"}
+    return {
+        "status": "ok",
+        "message": "Welcome to the VanaDristi API Platform!",
+        "timestamp": datetime.utcnow().isoformat(),
+    }
 
 
 # ------------------------------------------------------------------------------
