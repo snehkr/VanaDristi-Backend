@@ -640,20 +640,29 @@ async def get_plant_trends(request: Request, plant_id: str):
         {
             "$project": {
                 "day": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}},
-                "temperature": "$temperature",
-                "soil_moisture": "$soil_moisture",
-                "humidity": "$humidity",
+                "temperature": 1,
+                "humidity": 1,
+                "soil_moisture": "$soil_data.Soil_Moisture",
             }
         },
         {
             "$group": {
                 "_id": "$day",
-                "avg_temp": {"$avg": "$temperature"},
-                "avg_moisture": {"$avg": "$soil_moisture"},
+                "avg_temperature": {"$avg": "$temperature"},
+                "avg_soil_moisture": {"$avg": "$soil_moisture"},
                 "avg_humidity": {"$avg": "$humidity"},
             }
         },
         {"$sort": {"_id": 1}},
+        {
+            "$project": {
+                "date": "$_id",
+                "avg_temperature": 1,
+                "avg_soil_moisture": 1,
+                "avg_humidity": 1,
+                "_id": 0,
+            }
+        },
     ]
     trends = await db.sensor_data.aggregate(pipeline).to_list(length=365)
     return trends
