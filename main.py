@@ -648,8 +648,8 @@ async def get_plant_trends(request: Request, plant_id: str):
         {
             "$group": {
                 "_id": "$day",
-                "avg_temperature": {"$avg": "$temperature"},
-                "avg_soil_moisture": {"$avg": "$soil_moisture"},
+                "avg_temp": {"$avg": "$temperature"},
+                "avg_moisture": {"$avg": "$soil_moisture"},
                 "avg_humidity": {"$avg": "$humidity"},
             }
         },
@@ -657,8 +657,8 @@ async def get_plant_trends(request: Request, plant_id: str):
         {
             "$project": {
                 "date": "$_id",
-                "avg_temperature": 1,
-                "avg_soil_moisture": 1,
+                "avg_temp": 1,
+                "avg_moisture": 1,
                 "avg_humidity": 1,
                 "_id": 0,
             }
