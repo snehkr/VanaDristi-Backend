@@ -94,6 +94,12 @@ limiter = Limiter(key_func=get_remote_address)
 # ==============================================================================
 
 
+class LatestPlantUpdate(BaseModel):
+    plant_id: str = Field(
+        ..., description="The ID of the plant to be set as the latest."
+    )
+
+
 # --- Plant Models ---
 class AlertThresholds(BaseModel):
     min_soil_moisture: Optional[int] = Field(None, ge=0, le=100)
@@ -345,6 +351,7 @@ async def lifespan(app: FastAPI):
     await db.plants.create_index("name")
     await db.sensor_data.create_index([("plant_id", 1), ("timestamp", -1)])
     await db.chat_history.create_index([("plant_id", 1), ("timestamp", -1)])
+    await db.app_state.create_index("key", unique=True)
     print("Database indexes ensured.")
     yield
     print("Application shutdown.")
@@ -413,15 +420,6 @@ async def get_all_plants(limit: int = 100):
     return [PlantInDB(**p) for p in plants]
 
 
-@plant_router.get("/{plant_id}", response_model=PlantInDB)
-async def get_plant(plant_id: str):
-    plant = await db.plants.find_one({"_id": ObjectId(plant_id)})
-    if not plant:
-        raise HTTPException(status_code=404, detail="Plant not found")
-    plant["_id"] = str(plant["_id"])
-    return PlantInDB(**plant)
-
-
 @plant_router.put("/{plant_id}", response_model=PlantInDB)
 async def update_plant(plant_id: str, plant_update: PlantUpdate):
     await db.plants.update_one(
@@ -433,6 +431,99 @@ async def update_plant(plant_id: str, plant_update: PlantUpdate):
         raise HTTPException(status_code=404, detail="Plant not found")
     updated_plant["_id"] = str(updated_plant["_id"])
     return PlantInDB(**updated_plant)
+
+
+@plant_router.post("/latest", response_model=PlantInDB, tags=["Plant Management"])
+async def set_latest_plant(update_data: LatestPlantUpdate):
+    """
+    Sets or updates the 'latest' selected plant ID in the application state.
+    This is used to remember the last plant a user was interacting with.
+    """
+    plant_id = update_data.plant_id
+
+    # 1. Validate that the plant exists
+    plant = await db.plants.find_one({"_id": ObjectId(plant_id)})
+    if not plant:
+        raise HTTPException(
+            status_code=404, detail=f"Plant with ID '{plant_id}' not found."
+        )
+
+    # 2. Update or insert (upsert) the state record
+    await db.app_state.update_one(
+        {"key": "latest_plant_id"},
+        {"$set": {"value": plant_id, "updated_at": datetime.utcnow()}},
+        upsert=True,
+    )
+
+    plant["_id"] = str(plant["_id"])
+    return PlantInDB(**plant)
+
+
+@plant_router.get("/latest", response_model=PlantInDB, tags=["Plant Management"])
+async def get_latest_plant():
+    """
+    Retrieves the details of the 'latest' plant.
+
+    The logic is as follows:
+    1.  Try to find the plant ID explicitly set via the POST /latest endpoint.
+    2.  If not found, fallback to the plant with the most recent sensor data.
+    3.  If no plants exist, return a 404 error.
+    """
+    plant = None
+
+    # 1. Primary Method: Check the app_state collection
+    latest_state = await db.app_state.find_one({"key": "latest_plant_id"})
+    if latest_state and "value" in latest_state:
+        plant = await db.plants.find_one({"_id": ObjectId(latest_state["value"])})
+
+    # 2. Fallback Method: Find plant with the most recent sensor data
+    # if not plant:
+    #     latest_sensor_record = await db.sensor_data.find_one(
+    #         sort=[("timestamp", DESCENDING)]
+    #     )
+    #     if latest_sensor_record and "plant_id" in latest_sensor_record:
+    #         plant = await db.plants.find_one(
+    #             {"_id": ObjectId(latest_sensor_record["plant_id"])}
+    #         )
+
+    if not plant:
+        raise HTTPException(
+            status_code=404,
+            detail="No latest plant could be determined. No data available.",
+        )
+
+    plant["_id"] = str(plant["_id"])
+    return PlantInDB(**plant)
+
+
+@plant_router.delete("/latest", status_code=200, tags=["Plant Management"])
+async def unset_latest_plant():
+    """
+    Clears the 'latest' plant selection from the application state.
+    """
+    result = await db.app_state.delete_one({"key": "latest_plant_id"})
+
+    if result.deleted_count > 0:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Latest plant selection has been cleared successfully."
+            },
+        )
+    else:
+        return JSONResponse(
+            status_code=200,
+            content={"message": "No latest plant selection was set, nothing to clear."},
+        )
+
+
+@plant_router.get("/{plant_id}", response_model=PlantInDB)
+async def get_plant(plant_id: str):
+    plant = await db.plants.find_one({"_id": ObjectId(plant_id)})
+    if not plant:
+        raise HTTPException(status_code=404, detail="Plant not found")
+    plant["_id"] = str(plant["_id"])
+    return PlantInDB(**plant)
 
 
 @plant_router.delete("/{plant_id}", status_code=204)
@@ -577,6 +668,13 @@ async def upload_first_sensor_data(
             status_code=500,
             detail="Could not create or find a plant for the uploaded data.",
         )
+
+    # After finding or creating the plant, set it as the latest one.
+    await db.app_state.update_one(
+        {"key": "latest_plant_id"},
+        {"$set": {"value": plant_id, "updated_at": datetime.utcnow()}},
+        upsert=True,
+    )
 
     # Process and save sensor data
     data = json.loads(sensor_json)
