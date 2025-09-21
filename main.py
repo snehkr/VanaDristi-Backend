@@ -345,25 +345,33 @@ async def check_alerts_and_notify(plant_id: str, sensor_data: dict):
         await send_telegram_alert(chat_id, full_message)
 
 
-def convert_to_ist(utc_timestamp: str, human_readable: bool = False) -> str:
+def convert_to_ist(utc_timestamp, human_readable: bool = False) -> str:
     """
-    Convert a UTC timestamp (ISO 8601 format) to Indian Standard Time (IST).
-
-    Args:
-        utc_timestamp (str): Timestamp string in UTC, e.g., "2025-09-18T18:25:38.497+00:00"
-        human_readable (bool): If True, returns IST in a human-friendly format like "18 Sep 2025, 11:55 PM IST"
-
-    Returns:
-        str: Converted timestamp in IST
+    Convert a UTC timestamp to IST. Handles strings or datetime objects.
+    Returns human-readable or ISO format.
     """
-    utc_time = datetime.fromisoformat(utc_timestamp)
+    if utc_timestamp is None:
+        return "N/A"
+
+    if isinstance(utc_timestamp, datetime):
+        utc_time = utc_timestamp
+    elif isinstance(utc_timestamp, str):
+        try:
+            utc_time = datetime.fromisoformat(utc_timestamp)
+        except ValueError:
+            utc_time = datetime.fromisoformat(utc_timestamp.replace("Z", "+00:00"))
+    else:
+        raise TypeError(f"Unsupported type for utc_timestamp: {type(utc_timestamp)}")
+
+    # Convert to IST
     ist = pytz.timezone("Asia/Kolkata")
     ist_time = utc_time.astimezone(ist)
 
-    if human_readable:
-        return ist_time.strftime("%d %b %Y, %I:%M %p IST")
-    else:
-        return ist_time.isoformat()
+    return (
+        ist_time.strftime("%d %b %Y, %I:%M %p IST")
+        if human_readable
+        else ist_time.isoformat()
+    )
 
 
 # ==============================================================================
