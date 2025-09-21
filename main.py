@@ -5,6 +5,7 @@
 # ==============================================================================
 import os
 import json
+import pytz
 import time
 import asyncio
 import hashlib
@@ -88,6 +89,9 @@ db = db_client[DB_NAME]
 # --- Rate Limiter ---
 limiter = Limiter(key_func=get_remote_address)
 
+# --- Timezone Setup ---
+india = pytz.timezone("Asia/Kolkata")
+indian_time = datetime.now(india)
 
 # ==============================================================================
 # 4. PYDANTIC MODELS (SCHEMAS)
@@ -197,7 +201,7 @@ async def analyze_with_image(prompt: str, image_bytes: bytes) -> str:
             [prompt, image_part],
             generation_config={
                 "temperature": 0.2,
-                "max_output_tokens": 2048,
+                "max_output_tokens": 3072,
                 "response_mime_type": "application/json",
             },
         )
@@ -271,7 +275,7 @@ async def check_alerts_and_notify(plant_id: str, sensor_data: dict):
     # Check all thresholds
     if (
         (t := alerts.get("min_soil_moisture")) is not None
-        and (s := sensor_data.get("soil_moisture")) is not None
+        and (s := sensor_data.get("soil_data").get("Soil_Moisture")) is not None
         and s < t
     ):
         messages.append(
@@ -279,7 +283,7 @@ async def check_alerts_and_notify(plant_id: str, sensor_data: dict):
         )
     if (
         (t := alerts.get("max_soil_moisture")) is not None
-        and (s := sensor_data.get("soil_moisture")) is not None
+        and (s := sensor_data.get("soil_data").get("Soil_Moisture")) is not None
         and s > t
     ):
         messages.append(
@@ -319,7 +323,7 @@ async def check_alerts_and_notify(plant_id: str, sensor_data: dict):
         )
     if (
         (t := alerts.get("min_light_intensity")) is not None
-        and (s := sensor_data.get("light")) is not None
+        and (s := sensor_data.get("light_intensity")) is not None
         and s < t
     ):
         messages.append(
@@ -327,7 +331,7 @@ async def check_alerts_and_notify(plant_id: str, sensor_data: dict):
         )
     if (
         (t := alerts.get("max_light_intensity")) is not None
-        and (s := sensor_data.get("light")) is not None
+        and (s := sensor_data.get("light_intensity")) is not None
         and s > t
     ):
         messages.append(
@@ -339,6 +343,27 @@ async def check_alerts_and_notify(plant_id: str, sensor_data: dict):
             messages
         )
         await send_telegram_alert(chat_id, full_message)
+
+
+def convert_to_ist(utc_timestamp: str, human_readable: bool = False) -> str:
+    """
+    Convert a UTC timestamp (ISO 8601 format) to Indian Standard Time (IST).
+
+    Args:
+        utc_timestamp (str): Timestamp string in UTC, e.g., "2025-09-18T18:25:38.497+00:00"
+        human_readable (bool): If True, returns IST in a human-friendly format like "18 Sep 2025, 11:55 PM IST"
+
+    Returns:
+        str: Converted timestamp in IST
+    """
+    utc_time = datetime.fromisoformat(utc_timestamp)
+    ist = pytz.timezone("Asia/Kolkata")
+    ist_time = utc_time.astimezone(ist)
+
+    if human_readable:
+        return ist_time.strftime("%d %b %Y, %I:%M %p IST")
+    else:
+        return ist_time.isoformat()
 
 
 # ==============================================================================
@@ -589,34 +614,34 @@ async def upload_first_sensor_data(
     # Analyze the image to identify the plant
     contents = await image.read()
     prompt = f"""
-    You are an expert botanist and agricultural AI. Your task is to identify a plant from an image and generate a complete, realistic default profile for it in JSON format.
+    You are an expert botanist and agricultural AI. Your task is to identify a plant from an image and generate a realistic default profile for it in JSON format only.
 
     **Context:**
     - Current Location: Jaipur, Rajasthan, India
-    - Current Date and Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    - Current Date and Time: {indian_time.strftime("%d %b %Y, %I:%M %p IST")}
 
     **Instructions:**
-    1.  Identify the plant in the image.
-    2.  Based on the identified species, generate a JSON object containing a plausible default care profile.
-    3.  The `alerts` values should be sensible, general-purpose thresholds appropriate for this plant species. For example, a cactus will have different water needs than a fern.
-    4.  Do not include any text, notes, or markdown formatting before or after the JSON object.
+    1. Identify the plant species in the given image.
+    2. Generate a JSON object with a plausible default care profile for the identified species.
+    3. Ensure all numerical thresholds (alerts) are biologically sensible for the plant type (e.g., cactus vs. fern).
+    4. Output strictly valid JSON. Do not include explanations, comments, or markdown.
 
-    **Required JSON Output Structure:**
+    **Required JSON Structure:**
     {{
       "common_name": "string",
       "scientific_name": "string",
-      "location": "string",
+      "location": "Jaipur, Rajasthan, India",
       "alerts": {{
-        "min_soil_moisture": integer,
+        "min_soil_moisture": integer,  // percentage (0–100)
         "max_soil_moisture": integer,
-        "min_temperature": integer,
+        "min_temperature": integer,    // Celsius
         "max_temperature": integer,
-        "min_humidity": integer,
+        "min_humidity": integer,       // percentage (0–100)
         "max_humidity": integer,
-        "min_light_intensity": integer,
+        "min_light_intensity": integer, // lux
         "max_light_intensity": integer,
-        "min_leaf_color_index": null,
-        "max_leaf_color_index": null
+        "min_leaf_color_index": [R, G, B], // integers 0–255
+        "max_leaf_color_index": [R, G, B]
       }}
     }}
     """
@@ -786,12 +811,21 @@ You are a professional botanist. Analyze the given plant image and respond stric
 - 'family': botanical family name.
 - 'origin': native region or country.
 - 'growth_habit': tree, shrub, herb, climber, etc.
+- 'lifespan': annual, biennial, or perennial.
 - 'flowering_season': typical flowering months.
+- 'fruiting_season': typical fruiting months (if applicable).
 - 'edible_or_medicinal': short note if it has edible/medicinal use.
-- 'uses': short list of ornamental, medicinal, timber, or other uses.
-- 'care_summary': concise guide (sunlight, watering, soil, special tips).
+- 'toxicity': whether it is toxic to humans, pets, or livestock.
+- 'uses': short list of ornamental, medicinal, timber, ecological, or other uses.
+- 'symbolism_or_cultural_value': traditional, cultural, or religious significance.
+- 'propagation_methods': common propagation techniques (seed, cutting, grafting, etc.).
+- 'care_summary': concise guide (sunlight, watering, soil, pruning, special tips).
+- 'environmental_preferences': ideal climate, temperature range, humidity tolerance.
 - 'common_diseases': list of major diseases/pests (if any) with a one-line prevention/treatment tip.
 - 'diagnosis_from_image': if this plant shows visible disease/pest symptoms in the uploaded photo, name the issue and give a short remedy. If healthy, return "No visible disease detected."
+- 'conservation_status': IUCN status (if applicable).
+- 'similar_species': closely resembling species and how to differentiate them.
+- 'fun_fact': an interesting trivia or unique characteristic about the plant.
 Do not include any text outside of JSON.
 """
 
@@ -838,35 +872,47 @@ def build_prompt_from_sensor(
 ) -> str:
     """Constructs a detailed, structured prompt for the Gemini AI model."""
     prompt = f"""
-Analyze the following plant sensor data and provide a health assessment.
+You are a professional plant physiologist and agronomist. Analyze the provided plant sensor data and give a precise health assessment.
 
 **Context:**
 - Plant Name: "{plant_name}"
 - Plant Species: "{plant_species}"
-- Timestamp of data: {sensor_data.get('timestamp', 'N/A')}
+- Timestamp of data: {convert_to_ist(sensor_data.get('timestamp'), human_readable=True)}
 - Sensor Data JSON: {json.dumps(sensor_data, indent=2, default=str)}
 
 **Task:**
-1.  **Diagnose Condition:** Classify the plant's primary condition from this list: "Healthy", "Needs Water", "Overwatered", "Nutrient Deficiency", "Pest/Disease Issue", "Environmental Stress (Light/Temp)", "Other".
-2.  **Estimate Confidence:** Provide a confidence score for your diagnosis (from 0.0 to 1.0).
-3.  **Recommend Actions:** List up to 3 concrete, prioritized actions the user should take.
-4.  **Watering Advice:** Give a clear watering recommendation (e.g., "Water thoroughly now", "Check again in 2 days", "Allow soil to dry out").
-5.  **Provide Notes:** Add any brief, helpful notes or observations.
+1. **Diagnose Condition:** Identify the plant’s primary condition from this fixed list:
+   ["Healthy", "Needs Water", "Overwatered", "Nutrient Deficiency", "Pest/Disease Issue", "Environmental Stress (Light/Temp)", "Other"].
+   - Choose only one as the main diagnosis.
+   - If multiple conditions seem possible, select the most critical one.
 
-**Output Format:**
-Respond with a valid JSON object ONLY. Do not include any text before or after the JSON block.
-The JSON object must have these exact keys: "diagnosis", "confidence", "actions", "watering_recommendation", "notes".
-Example:
+2. **Estimate Confidence:** Return a confidence score (0.0–1.0) reflecting how certain you are about the diagnosis.
+
+3. **Recommend Actions:** Suggest up to 3 concrete, prioritized actions the user should take immediately or soon.
+   - Keep them short and practical.
+   - Order them from highest to lowest priority.
+
+4. **Watering Advice:** Give a clear, actionable watering recommendation (e.g., "Water thoroughly now", "Check again in 2 days", "Allow soil to dry out before next watering").
+   - Tailor it based on soil moisture, temperature, humidity, and plant type.
+
+5. **Provide Notes:** Add a brief note with helpful context, trends, or potential risks observed from the data (e.g., high temperature, low humidity, unusual leaf color if available).
+
+**Output Requirements:**
+- Respond with a valid JSON object only.
+- Do not include any explanation, text, or formatting outside the JSON.
+- Use exactly these keys in the JSON: "diagnosis", "confidence", "actions", "watering_recommendation", "notes".
+
+**Example Output:**
 {{
   "diagnosis": "Needs Water",
   "confidence": 0.95,
   "actions": [
-    "Water the plant with 500ml of water immediately.",
-    "Ensure the pot has adequate drainage.",
-    "Move the plant to a location with slightly less direct sunlight."
+    "Water the plant with 500ml immediately.",
+    "Ensure the pot has proper drainage to prevent root rot.",
+    "Move the plant away from harsh direct sunlight during peak afternoon hours."
   ],
   "watering_recommendation": "Water thoroughly now",
-  "notes": "The soil moisture is very low and the temperature is high, indicating significant water loss."
+  "notes": "The soil moisture is critically low and temperature is elevated, increasing water stress."
 }}
 """
     return prompt.strip()
@@ -884,30 +930,36 @@ def build_chat_prompt(
         last_diagnosis_text = json.dumps(last_analysis["ai_result_parsed"], indent=2)
 
     prompt = f"""
-You are 'VanaDristi', an expert plant doctor AI. Your goal is to provide simple, clear, and actionable advice to a plant owner based on their question and the latest data.
+You are **VanaDristi**, a trusted AI plant doctor. Your purpose is to give plant owners clear, simple, and actionable advice.
 
-**Your Persona:**
-- Professional, friendly, and encouraging.
-- You break down complex topics into easy-to-understand advice.
-- You NEVER respond in JSON format. You always respond in plain, conversational text.
+**Your Persona & Style:**
+- Professional yet friendly and reassuring.
+- Encourages the plant owner with positivity.
+- Explains complex ideas in easy-to-understand, everyday language.
+- Always speaks in plain text (never JSON, never code).
+- Focuses on solutions and practical next steps.
 
-**Here is the context you must use:**
+**Context You Must Use:**
 
-1.  **Latest Sensor Data:**
+1.  **Latest Sensor Data (for reference):**
     ```json
     {json.dumps(sensor_data, indent=2, default=str)}
     ```
 
-2.  **Your Own Last Automated Analysis of This Data:**
+2.  **Your Most Recent Automated Analysis of This Data:**
     ```json
     {last_diagnosis_text}
     ```
 
-3.  **The User's Current Question:**
+3.  **The Plant Owner’s Current Question:**
     "{question}"
-
+    
 **Your Task:**
-Based on all the context above, answer the user's question directly. Provide a helpful, professional, and simple solution.
+- Answer the user’s question directly and clearly.
+- If the diagnosis already provides an answer, explain it in simpler terms and connect it to the user’s concern.
+- If the question asks for something new, use the sensor data + analysis to guide your advice.
+- Give concrete, easy-to-follow steps (no jargon).
+- Keep the tone supportive, like a knowledgeable friend who wants their plant to thrive.
 """
     return prompt.strip()
 

@@ -143,6 +143,9 @@ Here is a summary of the available endpoints. For full details, run the server a
 | `/{plant_id}`                           | `GET`    | Get details for a specific plant.                     |
 | `/{plant_id}`                           | `PUT`    | Update a plant's details and alert thresholds.        |
 | `/{plant_id}`                           | `DELETE` | Delete a plant.                                       |
+| `/latest`                               | `GET`    | Get Latest Plant ID for observation                   |
+| `/latest`                               | `POST`   | Set Latest Plant ID for observation                   |
+| `/latest`                               | `DELETE` | Delete Latest Plant ID for observation                |
 | **Sensor Data (`/api/v1/sensor`)**      |          |                                                       |
 | `/upload`                               | `POST`   | Upload sensor data (JSON) and an optional image file. |
 | `/upload_first`                         | `POST`   | Upload sensor data (JSON) and an image file with AI.  |
