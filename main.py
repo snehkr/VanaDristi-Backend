@@ -114,8 +114,8 @@ class AlertThresholds(BaseModel):
     max_humidity: Optional[int] = Field(None, ge=0, le=100)
     min_light_intensity: Optional[int] = Field(None)
     max_light_intensity: Optional[int] = Field(None)
-    min_leaf_color_index: Optional[int] = Field(None)
-    max_leaf_color_index: Optional[int] = Field(None)
+    min_leaf_color_index: Optional[List[int]] = Field(None)
+    max_leaf_color_index: Optional[List[int]] = Field(None)
 
 
 class PlantBase(BaseModel):
