@@ -182,7 +182,7 @@ async def analyze_text(prompt: str, response_format: str = "json") -> str:
             prompt,
             generation_config={
                 "temperature": 0.2,
-                "max_output_tokens": 2048,
+                "max_output_tokens": 3072,
                 "response_mime_type": (
                     "application/json" if response_format == "json" else "text/plain"
                 ),
