@@ -1093,25 +1093,50 @@ async def get_chat_history(
     request: Request,
     plant_id: str = Query(default=None),
     limit: int = 50,
+    include_chat: bool = Query(default=False),
 ):
     """Retrieves the history of AI analysis interactions."""
+
+    # Build match filter dynamically
+    match_filter = {}
+    if plant_id:
+        match_filter["plant_id"] = plant_id
+
+    # Exclude chat entries unless explicitly included
+    if not include_chat:
+        match_filter["type"] = {"$ne": "chat"}
 
     if plant_id:
         # Fetch latest entries for the given plant
         cursor = (
-            db.chat_history.find({"plant_id": plant_id}, {"_id": 0})
+            db.chat_history.find(match_filter, {"_id": 0})
             .sort("timestamp", DESCENDING)
             .limit(limit)
         )
         items = await cursor.to_list(length=limit)
+
     else:
         # Fetch latest entry per plant
-        pipeline = [
-            {"$sort": {"timestamp": -1}},
-            {"$group": {"_id": "$plant_id", "latest_entry": {"$first": "$$ROOT"}}},
-            {"$replaceRoot": {"newRoot": "$latest_entry"}},
-            {"$limit": limit},
-        ]
+        pipeline = []
+
+        # Apply match filter if any
+        if match_filter:
+            pipeline.append({"$match": match_filter})
+
+        pipeline.extend(
+            [
+                {"$sort": {"timestamp": -1}},
+                {
+                    "$group": {
+                        "_id": "$plant_id",
+                        "latest_entry": {"$first": "$$ROOT"},
+                    }
+                },
+                {"$replaceRoot": {"newRoot": "$latest_entry"}},
+                {"$limit": limit},
+            ]
+        )
+
         cursor = db.chat_history.aggregate(pipeline)
         items = [doc async for doc in cursor]
 
