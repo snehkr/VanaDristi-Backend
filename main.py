@@ -273,22 +273,23 @@ async def check_alerts_and_notify(plant_id: str, sensor_data: dict):
     messages = []
 
     # Check all thresholds
-    if (
-        (t := alerts.get("min_soil_moisture")) is not None
-        and (s := sensor_data.get("soil_data").get("Soil_Moisture")) is not None
-        and s < t
-    ):
-        messages.append(
-            f"💧 Soil moisture is critically low ({s}%), below your threshold of {t}%."
-        )
-    if (
-        (t := alerts.get("max_soil_moisture")) is not None
-        and (s := sensor_data.get("soil_data").get("Soil_Moisture")) is not None
-        and s > t
-    ):
-        messages.append(
-            f"💧 Soil moisture is too high ({s}%), above your threshold of {t}%."
-        )
+    # if (
+    #     (t := alerts.get("min_soil_moisture")) is not None
+    #     and (s := sensor_data.get("soil_data").get("Soil_Moisture")) is not None
+    #     and s < t
+    # ):
+    #     messages.append(
+    #         f"💧 Soil moisture is critically low ({s}%), below your threshold of {t}%."
+    #     )
+    # if (
+    #     (t := alerts.get("max_soil_moisture")) is not None
+    #     and (s := sensor_data.get("soil_data").get("Soil_Moisture")) is not None
+    #     and s > t
+    # ):
+    #     messages.append(
+    #         f"💧 Soil moisture is too high ({s}%), above your threshold of {t}%."
+    #     )
+
     if (
         (t := alerts.get("min_temperature")) is not None
         and (s := sensor_data.get("temperature")) is not None
