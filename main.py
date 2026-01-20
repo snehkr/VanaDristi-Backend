@@ -45,7 +45,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 # --- Google Gemini AI ---
-import google.generativeai as genai
+from google import genai
 
 # ==============================================================================
 # 2. CONFIGURATION
@@ -162,24 +162,27 @@ class ChatQuery(BaseModel):
 # ==============================================================================
 
 # --- Gemini Service ---
-_gemini_model = None
+_gemini_client = None
 
 
 def get_gemini_model():
-    global _gemini_model
-    if _gemini_model is None:
+    global _gemini_client
+    if _gemini_client is None:
         if not GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY environment variable not set.")
-        genai.configure(api_key=GEMINI_API_KEY)
-        _gemini_model = genai.GenerativeModel(GEMINI_MODEL_NAME)
-    return _gemini_model
+
+        _gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+
+    return _gemini_client
 
 
 async def analyze_text(prompt: str, response_format: str = "json") -> str:
     try:
-        model = get_gemini_model()
-        response = await model.generate_content_async(
-            prompt,
+        client = get_gemini_model()
+
+        response = await client.models.generate_content_async(
+            model=GEMINI_MODEL_NAME,
+            contents=prompt,
             generation_config={
                 "temperature": 0.2,
                 "max_output_tokens": 3072,
@@ -188,25 +191,34 @@ async def analyze_text(prompt: str, response_format: str = "json") -> str:
                 ),
             },
         )
+
         return response.text
-    except Exception as e:
+    except Exception:
         raise
 
 
 async def analyze_with_image(prompt: str, image_bytes: bytes) -> str:
     try:
-        model = get_gemini_model()
-        image_part = {"mime_type": "image/jpeg", "data": image_bytes}
-        response = await model.generate_content_async(
-            [prompt, image_part],
+        client = get_gemini_model()
+
+        response = await client.models.generate_content_async(
+            model=GEMINI_MODEL_NAME,
+            contents=[
+                prompt,
+                {
+                    "mime_type": "image/jpeg",
+                    "data": image_bytes,
+                },
+            ],
             generation_config={
                 "temperature": 0.2,
                 "max_output_tokens": 3072,
                 "response_mime_type": "application/json",
             },
         )
+
         return response.text
-    except Exception as e:
+    except Exception:
         raise
 
 
