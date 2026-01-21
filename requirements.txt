@@ -6,7 +6,7 @@ pydantic
 python-dotenv
 pymongo[srv]
 motor
-google-generativeai
+google-genai
 python-multipart
 Pillow
 slowapi
